@@ -446,11 +446,13 @@ dependencies = [
 name = "code_exercise03"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ethers",
  "ethers-providers",
  "ethers-solc",
  "eyre",
  "hex",
+ "log",
  "tokio",
 ]
 
