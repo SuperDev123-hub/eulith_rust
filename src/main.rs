@@ -1,9 +1,8 @@
-use ethers::contract::Contract;
 use ethers_providers::{Middleware, Provider};
 use ethers::utils::Ganache;
 use ethers::prelude::{
     BlockNumber, ConfigurableArtifacts, ContractFactory, LocalWallet, Project,
-    ProjectCompileOutput, ProjectPathsConfig, Signer, SignerMiddleware, U256, abigen,
+    ProjectCompileOutput, ProjectPathsConfig, Signer, SignerMiddleware, U256,
 };
 use eyre::Result;
 use eyre::{eyre, ContextCompat};
@@ -11,10 +10,18 @@ use ethers_solc::Artifact;
 use hex::ToHex;
 use std::path::PathBuf;
 use std::time::Duration;
+use tokio::{fs, io::AsyncBufReadExt, sync::mpsc};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    deploy_contract("gas monster ski craft below illegal discover limit dog bundle bus artefact", "Eulith").await?;    
+    let mut stdin = tokio::io::BufReader::new(tokio::io::stdin()).lines();
+
+    loop {        
+        if let Some(evt) = stdin.next_line().await.expect("abc") {
+            println!("{:?}", evt);
+        }
+    }
+    // deploy_contract("gas monster ski craft below illegal discover limit dog bundle bus artefact", "Eulith").await?;    
     Ok(())
 }
 
@@ -84,7 +91,15 @@ async fn deploy_contract(mnemonic: &str, contract_name: &str)->Result<()> {
         contract.address().encode_hex::<String>()
     );
     
+    let init_value = contract.method::<_, U256>("value", ())?.call().await?;
 
+    println!("init value is {}", init_value);
+    let call = contract.method::<_,U256>("updateValue", U256::from(5))?;
+    let pending_tx = call.send().await?;
+    let _ = pending_tx.confirmations(1).await?;
+    let updated_value = contract.method::<_, U256>("value", ())?.call().await?;
+    println!("updated value is {}", updated_value);
+    
     Ok(())
 }
 

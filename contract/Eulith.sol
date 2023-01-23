@@ -3,7 +3,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract Eulith {
 
-    uint256 public value;
+    uint256 public value = 1;
 
     // event for EVM logging
     event UpdateEvent(uint256 value);
