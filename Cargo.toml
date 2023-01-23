@@ -12,3 +12,4 @@ ethers-providers = { git = "https://github.com/gakonst/ethers-rs", rev="6b6c5115
 tokio = { version = "1.17.0", features = ["full"] }
 eyre = "*"
 hex = "*"
+log = "0.4"

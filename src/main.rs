@@ -1,34 +1,53 @@
-use ethers_providers::{Middleware, Provider};
-use ethers::utils::Ganache;
 use ethers::prelude::{
     BlockNumber, ConfigurableArtifacts, ContractFactory, LocalWallet, Project,
     ProjectCompileOutput, ProjectPathsConfig, Signer, SignerMiddleware, U256,
 };
+use ethers::utils::Ganache;
+use ethers_providers::{Middleware, Provider};
+use ethers_solc::Artifact;
 use eyre::Result;
 use eyre::{eyre, ContextCompat};
-use ethers_solc::Artifact;
 use hex::ToHex;
+use log::{error, info};
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::{fs, io::AsyncBufReadExt, sync::mpsc};
-
+enum EventType {
+    Input(String),
+    BlockEvent,
+}
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     let mut stdin = tokio::io::BufReader::new(tokio::io::stdin()).lines();
 
-    loop {        
-        if let Some(evt) = stdin.next_line().await.expect("abc") {
-            println!("{:?}", evt);
-        }
-    }
-    // deploy_contract("gas monster ski craft below illegal discover limit dog bundle bus artefact", "Eulith").await?;    
-    Ok(())
+    // loop {
+    //     let evt = {
+    //         tokio::select! {
+    //             line = stdin.next_line() => Some(EventType::Input(line.expect("can get line").expect("can read line from stdin"))),
+    //         }
+    //     };
+
+    //     if let Some(event) = evt {
+    //         match event {
+    //             EventType::Input(line) => match line.as_str() {
+    //                 "deploy contract" => deploy_contract("Eulith").await.expect("abc"),
+    //                 cmd if cmd.starts_with("update value") => {
+    //                     deploy_contract("abc").await.expect("deploy contract error")
+    //                 }
+    //                 _ => println!("unknown command"),
+    //             },
+    //             _ => println!("cccccccccc"),
+    //         }
+    //     }
+    // }
+    deploy_contract("Eulith").await.expect("Deploy Error");
 }
 
-async fn deploy_contract(mnemonic: &str, contract_name: &str)->Result<()> {    
+async fn deploy_contract(contract_name: &str) -> Result<()> {
+    let mnemonic = "gas monster ski craft below illegal discover limit dog bundle bus artefact";
     let ganache = Ganache::new().mnemonic(mnemonic).spawn();
-    println!("HTTP Endpoint: {}", ganache.endpoint());    
-    
+    println!("HTTP Endpoint: {}", ganache.endpoint());
+
     let wallet: LocalWallet = ganache.keys()[0].clone().into();
     let first_address = wallet.address();
     println!(
@@ -83,23 +102,24 @@ async fn deploy_contract(mnemonic: &str, contract_name: &str)->Result<()> {
     // let gas_limit = block.gas_limit;
     // deployer.tx.set_gas::<U256>(gas_limit);
 
-    // Create transaction and send    
+    // Create transaction and send
     let contract = deployer.clone().legacy().send().await?;
 
     println!(
-        "{} implemented {}", contract_name,
+        "{} implemented {}",
+        contract_name,
         contract.address().encode_hex::<String>()
     );
-    
+
     let init_value = contract.method::<_, U256>("value", ())?.call().await?;
 
     println!("init value is {}", init_value);
-    let call = contract.method::<_,U256>("updateValue", U256::from(5))?;
+    let call = contract.method::<_, U256>("updateValue", U256::from(5))?;
     let pending_tx = call.send().await?;
     let _ = pending_tx.confirmations(1).await?;
     let updated_value = contract.method::<_, U256>("value", ())?.call().await?;
     println!("updated value is {}", updated_value);
-    
+
     Ok(())
 }
 
